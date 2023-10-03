@@ -6,7 +6,8 @@ greenribbon scraping repo
    npm i
 2. 서버 실행
    npm start
-3. 각각 요청
+3. 각각 요청 path
+   
    3.1 건강심사평가원 간편로그인 요청
      http://localhost:8080/hira/easyLogin
    
