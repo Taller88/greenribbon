@@ -26,9 +26,15 @@ java -Dlibray.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb
 
     
         
-## 3. 서버 실행
-
-   npm start
+## 3. 서버 실행 및 DB Create
+  1. 서버 실행
+     ```bash
+        npm start
+     ```
+  2. DB Create
+     * 다른 요청전에 DB Schema 생성을 위해 서버를 켜신후에 아래 통신을 한번만 날려주세요!
+     * DB create 설정은 ./dbCrud/DynamoDB_local.js파일의 createTable 함수를 보시면 확인하실 수 있습니다!
+     * http://localhost:8080/nhis/dbCreate
    
 ## 4. 각각 요청 path
    
