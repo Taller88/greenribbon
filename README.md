@@ -11,6 +11,7 @@ greenribbon scraping repo
 
    npm i
 
+        
 ## 2. DynamoDB Local 설치 및 실행법 
   [AWS DynamoDB Local v1.x 다운로드 링크](https://docs.aws.amazon.com/ko_kr/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html)
    * 버전: DynamoDB Local v1.x 다운로드
@@ -18,8 +19,12 @@ greenribbon scraping repo
    * 실행방법
      1. 설치된 path로 이동
      2. 아래 명령어를 쳐주세요! port를 변경하신다면 ./dbCryd/DynamoDB_local.js에서 포트를 같이 변경해주세요!
-        java -Dlibray.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb
-     3. 실행 및 포트 확인 
+```bash
+java -Dlibray.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb
+```
+    
+
+    
         
 ## 3. 서버 실행
 
