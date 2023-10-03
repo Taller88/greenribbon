@@ -943,6 +943,8 @@ Nhis.prototype.자격확인 = async function(Input){
 
         // pdfreader를 사용하여 PDF를 파싱
         const pdfResults = await readPDFPages(birthday, pdfBuffer);
+        console.log(pdfResults);
+
         pdfResults.forEach((pdfMap)=>{
             
             const 발급일자=pdfMap["40.896"][0]
@@ -1159,21 +1161,34 @@ Nhis.prototype.보험료납부확인 = async function(Input){
     }
 
     const functionParams = [];
-    console.log("while init! end! prefixIdx:"+ prefixIdx);
-    paramStrArr.forEach((paramStr, idx)=>{
+
+    for(const paramStr of paramStrArr){
         const paramSplits = paramStr.split(",");
         const tempArr = []
-        paramSplits.forEach((paramSplit, idx2)=>{
+        for (const paramSplit of paramSplits) {
             tempArr.push(paramSplit.replaceAll('\\', '').replaceAll('"','').trim())
-        });
+        }
+
+        // 피부양자의 경우 조회할 수 없음 -> nhis에서 확인 가능
+        // 피부양자의 경우 부양자의 데이터가 나오는데 그값은 제외
+        if(tempArr[3]==='6'||tempArr[3]==="6"){
+            continue;
+        }
+
         functionParams.push(tempArr);
-    })
+    }
 
     // ===========================================
     // HTML parsing Code 보험금납부확인 목록 parsing  end
     // ===========================================
 
 
+    // if(functionParams[0][3].indexOf("6")>-1){
+    //     return {
+    //         statusCode:200,
+    //         body:"피부양자는 출력할 수 없습니다."
+    //     }    
+    // }
     const promises = functionParams.map((functionParam) => parsingIssuanceData(functionParam, cookie, Input,birthday))
     const pdfParsingResult = []
     
@@ -1189,7 +1204,7 @@ Nhis.prototype.보험료납부확인 = async function(Input){
             })
           }else{
             // promiseResult.status: rejected 일 경우
-            console.lolg(promiseResult);
+            console.log(promiseResult);
             return {
               statusCode:500,
               body:"scraping_error"
@@ -1270,6 +1285,7 @@ async function parsingIssuanceData(param,cookie, Input,birthday){
         const selLngeType ="1";
         const selPbltnType= Input.usePurposes;
         
+       
         
         let  hidYearTo=param[6].substring(0,4);//상실일의 연도
         let hidMonthTo = param[6].substring(4,6);//상실일의 월
