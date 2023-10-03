@@ -1,8 +1,11 @@
 # greenribbon
 greenribbon scraping repo
 
-포트: 8080
+## 포트: 8080
+## API 명세서
 
+ https://docs.google.com/spreadsheets/d/1GCI7EjBzbIPZY6pDBeCyihoqql_iF5ySUfB-8oCe7pA/edit#gid=1450538453
+   
 ## 1. node_modules 설치
 
    npm i
