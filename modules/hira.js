@@ -611,7 +611,13 @@ Hira.prototype.문자요청 = async function(Input){
 
         let dbResult = await selectItem(uuid);
         
-        if(JSON.stringify(dbResult)==="{}"){
+        if(JSON.stringify(dbResult)==="{}"||
+            !dbResult.Item||
+            !dbResult.Item.cookie||
+            !dbResult.Item.menuId||
+            !dbResult.Item.ptlCookie||
+            !dbResult.Item.queData){
+                
             return {
                 statusCode:400,
                 body:"LOGINFIRST"
@@ -619,7 +625,6 @@ Hira.prototype.문자요청 = async function(Input){
         }
         const dbItem = dbResult.Item;
 
-        console.log(dbItem)
         let cookie = dbItem.cookie;
         let menuId = dbItem.menuId;
         const ptlCookie = dbItem.ptlCookie;
@@ -1127,13 +1132,6 @@ Hira.prototype.간편로그인 = async function(Input){
         const telecom= Input.telecom;
         const loginTypeLevel = Input.loginTypeLevel;
 
-        // const organization = Input.organization;
-        // const loginType= Input.loginType;
-        // const loginTypeLevel= Input.loginTypeLevel;
-        // const startDate= Input.startDate;
-        // const endDate= Input.endDate;
-        // const id= Input.id;
-        // const type= Input.type;
 
         if(loginTypeLevel=="5"&& !telecom){
             return {

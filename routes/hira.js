@@ -96,30 +96,17 @@ router.get("/smsRequest", async(req, res, next)=>{
 
 
         
-        const organization="002";
-        const loginType="5"
         const loginTypeLevel="6"        
         const phoneNo="01091978686"
         const userName="정진아"
         const identity="9306201268217"
         const captchaImg = "472318"
-        // loginTypeLevel
-        //  "1":카카오톡
-        //  "2":페이코
-        //  "3":삼성패스 -> 재발급 필요할땐 재발급 필요하다고 나옴
-        //  "4":KB모바일 -> 
-        //  "5":통신사(PASS)
-        //  "6":네이버
-        //  "7":신한인증서
-        //  "8": toss
+       
 
         const telecom = "5"// pass 테스트 -> LG 알뜰폰
         const uuid = "qwer"
         const input = {
             uuid:uuid,
-            organization: organization,
-            loginType: loginType,
-            loginTypeLevel: loginTypeLevel,
             phoneNo: phoneNo,       
             userName: userName,
             identity: identity,
@@ -175,31 +162,16 @@ router.post("/smsRequest", async(req, res, next)=>{
     try {
 
         const uuid=req.body.uuid;
-        const organization=req.body.organization
-        const loginType=req.body.loginType
-        const loginTypeLevel=req.body.loginTypeLevel
-        const phoneNo=req.body.phoneNo
-        const userName=req.body.userName
-        const identity=req.body.identity
-        const telecom=req.body.telecom
+        const phoneNo=req.body.phoneNo;
+        const userName=req.body.userName;
+        const identity=req.body.identity;
+        const telecom=req.body.telecom;
 
-        const captchaImg=req.body.captchaImg
-
-        // loginTypeLevel
-        //  "1":카카오톡
-        //  "2":페이코
-        //  "3":삼성패스 -> 재발급 필요할땐 재발급 필요하다고 나옴
-        //  "4":KB모바일 -> 
-        //  "5":통신사(PASS)
-        //  "6":네이버
-        //  "7":신한인증서
-        //  "8": toss
+        // 보안문자
+        const captchaImg=req.body.captchaImg;
 
         const input = {
             uuid:uuid,
-            organization: organization,
-            loginType: loginType,
-            loginTypeLevel: loginTypeLevel,
             phoneNo: phoneNo,       
             userName: userName,
             identity: identity,
