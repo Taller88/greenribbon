@@ -36,7 +36,26 @@ java -Dlibray.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb
      * DB create 설정은 ./dbCrud/DynamoDB_local.js파일의 createTable 함수를 보시면 확인하실 수 있습니다!
      * http://localhost:8080/nhis/dbCreate
    
-## 4. 각각 요청 path
+## 4. 문자인증 특이사항 
+  1. 문자Init
+     * 문자를 요청하기 위해서는 보안문자를 입력해야합니다. 
+     * 보안문자는 해당 통신을 날리면 base64로 인코딩한 데이터가 응답으로 떨어집니다. 
+  2. 문자요청
+     * 다른 easyLogin과 parameter는 거의 동일
+     * 1번의 문자Init에서 응답받은 보안문자(captchaImg)를 사용자에게 보여주고 입력하게 해야함 
+     
+     2.1. 특이사항(!!!!!)
+        * 문자인증을 지원하는 스크래핑 대상 사이트에서 개인정보 validation 체크를 하지 않음
+        * 통신 오류만 나지 않으면 무조건 'success_sms_request' 응답이 나옴
+          
+        [여기](https://www.hira.or.kr/rb/diag/form.do?pgmid=HIRAA070001000600) 들어가보시면 확인하실 수 있습니다.
+     
+  3. 문자확인
+     * 전달받은 인증번호(authNum)를 입력해주세요
+     * 인증번호는 validation 체크를 함
+
+
+## 5. 각각 요청 path + sms 요청 추가
    
    ### 4.1 건강심사평가원 간편로그인 요청
      http://localhost:8080/hira/easyLogin
@@ -45,16 +64,27 @@ java -Dlibray.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb
      http://localhost:8080/hira/authCheck
    
    ### 4.3 건강심사평가원 내진료정보열람 요청
-     http://localhost:8080/nhis/readDiagnosisInfo
-   
-   ### 4.4 건강보험공단 간편로그인 요청
+     http://localhost:8080/hira/readDiagnosisInfo
+        
+   ### 4.4 건강심사평가원 문자Init 요청
+     http://localhost:8080/hira/smsInit
+     
+   ### 4.5 건강심사평가원 문자요청 요청
+     http://localhost:8080/hira/smsRequest
+     
+   ### 4.6 건강심사평가원 문자확인 요청
+     http://localhost:8080/hira/smsCheck
+     
+   ### 4.7 건강보험공단 간편로그인 요청
      http://localhost:8080/nhis/easyLogin
    
-   ### 4.5 건강보험공단 인증확인 요청
-     http://localhost:8080/hira/authCheck
+   ### 4.8 건강보험공단 인증확인 요청
+     http://localhost:8080/nhis/authCheck
    
-   ### 4.6 건강보험공단 자격확인 요청
+   ### 4.9 건강보험공단 자격확인 요청
      http://localhost:8080/nhis/qualificationCheck
    
-   ### 4.7 건강보험공단 보험료납부확인 요청
+   ### 4.0 건강보험공단 보험료납부확인 요청
      http://localhost:8080/nhis/insuranceFeeCheck
+
+     
