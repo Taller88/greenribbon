@@ -1,8 +1,8 @@
 const axios = require('axios');
-const {cookieParser, sliceFunc, base64decoding, isJuminNo} = require('../common/commonFunc');
+const {cookieParser, sliceFunc, base64decoding, isJuminNo, cookieRefresh} = require('../common/commonFunc');
 const cheerio = require('cheerio');
 const {putItem, selectItem} =  require('../dbCrud/DynamoDB_local');
-const {base64Encoding} = require('../common/commonFunc')
+const {base64Encoding} = require('../common/commonFunc');
 
 function Hira(){
     this.TEMPDB = {};
@@ -202,6 +202,910 @@ function Hira(){
         
 };
 
+// 보안문자를 받아야하기 때문에 먼저 요청해야함 
+Hira.prototype.문자Init = async function(Input){
+    let response = {};
+    let postData = "";
+    let header = {};
+    const host = "https://ptl.hira.or.kr";
+    const niceHost = 'https://nice.checkplus.co.kr';
+    
+    try {
+        const uuid = Input.uuid;
+        const telecom = Input.telecom;
+        let mobileco = null;
+
+        //SKT:0,SKM:4,KTF:8,KTM:12,LGT:16,LGM:20};
+        switch(telecom){
+            case "0":
+                mobileco = "SKT"
+                break;
+            case "1":
+                mobileco = "KTF"
+                break;
+
+            case "2":
+                mobileco = "LGT"
+                break;
+
+            case "3":
+                mobileco = "SKM"
+                break;
+
+            case "4":
+                mobileco = "KTM"
+                break;
+
+            case "5":
+                mobileco = "LGM"
+                break;
+        }
+
+        const mvnoCo = mobileco;
+
+        header ={}
+        // GET https://ptl.hira.or.kr/main.do?pageType=certByJ&domain=https://www.hira.or.kr&uri=JTJGcmIlMkZjbW1uJTJGcmJDZXJ0UmV0dXJuLmRvJTNGc3RyUGFnZVR5cGUlM0RESUFH HTTP/1.1
+        header['Host']='ptl.hira.or.kr'
+        header['Connection']='keep-alive'
+        header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+        header['sec-ch-ua-mobile']='?0'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Upgrade-Insecure-Requests']='1'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+        header['Sec-Fetch-Site']='same-site'
+        header['Sec-Fetch-Mode']='navigate'
+        header['Sec-Fetch-User']='?1'
+        header['Sec-Fetch-Dest']='document'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+
+        result = await axios({
+            method:'GET',
+            url:host+'/main.do?pageType=certByJ&domain=https://www.hira.or.kr&uri=JTJGcmIlMkZjbW1uJTJGcmJDZXJ0UmV0dXJuLmRvJTNGc3RyUGFnZVR5cGUlM0RESUFH',
+            headers:header
+        });
+
+        console.log("[module] 문자 init main.do completed!")
+
+        let cookie = cookieParser(result);
+
+        // POST https://ptl.hira.or.kr/common/signInfo.do HTTP/1.1
+        header['Host']='ptl.hira.or.kr'
+        header['Connection']='keep-alive'
+        header['Content-Length']='0'
+        header['sec-ch-ua']='"Chromium";v="118", "Google Chrome";v="118", "Not=A?Brand";v="99"'
+        header['Content-Type']='application/x-www-form-urlencoded; charset=UTF-8'
+        header['X-Requested-With']='XMLHttpRequest'
+        header['sec-ch-ua-mobile']='?0'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Accept']='*/*'
+        header['Origin']='https://ptl.hira.or.kr'
+        header['Sec-Fetch-Site']='same-origin'
+        header['Sec-Fetch-Mode']='cors'
+        header['Sec-Fetch-Dest']='empty'
+        header['Referer']='https://ptl.hira.or.kr/main.do?pageType=certByJ&domain=https://www.hira.or.kr&uri=JTJGcmIlMkZjbW1uJTJGcmJDZXJ0UmV0dXJuLmRvJTNGc3RyUGFnZVR5cGUlM0RESUFH'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+        header['Cookie']=cookie;
+        
+        postData = ""
+
+        // 세션 등록 및 재발행
+        result = await axios({
+            method:'POST',
+            url:host+'/common/signInfo.do',
+            data:postData,
+            headers:header
+        });
+
+        const newCookie = cookieParser(result);
+
+        // 기존에 발급받은 JSESSIONID 재발행 
+        cookie = cookieRefresh(cookie, newCookie);
+        
+        header = {}
+        // POST https://ptl.hira.or.kr/co/checkplus/create.do HTTP/1.1
+        header['Host']='ptl.hira.or.kr'
+        header['Connection']='keep-alive'
+        header['Cache-Control']='max-age=0'
+        header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+        header['sec-ch-ua-mobile']='?0'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Upgrade-Insecure-Requests']='1'
+        header['Origin']='https://ptl.hira.or.kr'
+        header['Content-Type']='application/x-www-form-urlencoded'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+        header['Sec-Fetch-Site']='same-origin'
+        header['Sec-Fetch-Mode']='navigate'
+        header['Sec-Fetch-Dest']='document'
+        header['Referer']='https://ptl.hira.or.kr/main.do?pageType=certByJ&domain=https://www.hira.or.kr&uri=JTJGcmIlMkZjbW1uJTJGcmJDZXJ0UmV0dXJuLmRvJTNGc3RyUGFnZVR5cGUlM0RESUFH'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+        header['Cookie']=cookie;
+
+        postData = 'authType=M&isHttp=https&isAbledBank=nice&domain=https%3A%2F%2Fptl.hira.or.kr'
+        
+        result = await axios({
+            method:'POST',
+            url:host+'/co/checkplus/create.do',
+            headers:header,
+            data:postData
+        });
+
+        
+        console.log("[module] 문자 init create.do completed!")
+
+        // 인증후 필요
+        const ptlCookie = cookie;
+
+        const EncodeData = sliceFunc(result.data, 'name="EncodeData" value="', '" />');
+        const mValue = sliceFunc(result.data, '" name="m" value="', '" />');
+
+        // POST https://nice.checkplus.co.kr/CheckPlusSafeModel/checkplus.cb HTTP/1.1
+        header['Host']='nice.checkplus.co.kr'
+        header['Connection']='keep-alive'
+        header['Cache-Control']='max-age=0'
+        header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+        header['sec-ch-ua-mobile']='?0'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Upgrade-Insecure-Requests']='1'
+        header['Origin']='https://ptl.hira.or.kr'
+        header['Content-Type']='application/x-www-form-urlencoded'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+        header['Sec-Fetch-Site']='cross-site'
+        header['Sec-Fetch-Mode']='navigate'
+        header['Sec-Fetch-Dest']='document'
+        header['Referer']='https://ptl.hira.or.kr/'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+
+        postData = 'm='+mValue+'&EncodeData='+encodeURIComponent(EncodeData);
+
+        result = await axios({
+            method:'POST',
+            url:niceHost+'/CheckPlusSafeModel/checkplus.cb',
+            data:postData,
+            headers:header
+        });
+
+
+        console.log(cookieParser(result));
+        // const JSESSIONID = sliceFunc(cookieParser(result), '; JSESSIONID=', ';')
+        cookie = cookieParser(result);
+
+        console.log(cookie)
+        const strArr = sliceFunc(result.data, "callTracerApiInput('", ");").split("', '");
+        const hostStr = strArr[0]
+        const ipStr = strArr[1]
+
+        var start = 10000;
+        var end = 99999;
+        var rand = Math.floor((Math.random() * (end - start + 1)) + start);
+        const loginId = strArr[2] + "_T_" + rand + "_WC";
+        const port = strArr[3]
+
+        console.log("/CheckPlusSafeModel/checkplus.cb completed!")
+
+        // POST https://ifc.niceid.co.kr/TRACERAPI/inputQueue.do HTTP/1.1
+        header['Host']='ifc.niceid.co.kr'
+        header['Connection']='keep-alive'
+        header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+        header['Accept']='*/*'
+        header['Content-Type']='application/x-www-form-urlencoded; charset=UTF-8'
+        header['sec-ch-ua-mobile']='?0'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Origin']='https://nice.checkplus.co.kr'
+        header['Sec-Fetch-Site']='cross-site'
+        header['Sec-Fetch-Mode']='cors'
+        header['Sec-Fetch-Dest']='empty'
+        header['Referer']='https://nice.checkplus.co.kr/'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+        
+        const queData = {
+            ipStr:ipStr,
+            loginId:loginId,
+            port:port            
+        }
+
+        postData = 'host='+hostStr+'&ip='+ipStr+'&loginId='+loginId+'&port='+port+'&pageUrl=service&userAgent='+encodeURIComponent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36')
+        result = await axios({
+            method:'POST',
+            url:'https://ifc.niceid.co.kr/TRACERAPI/inputQueue.do',
+            data:postData,
+            headers:header
+        });
+
+        const wcCookie = sliceFunc(result.data, '"loginId" type="String">', '</Parameter');
+        
+        cookie+=("wcCookie="+wcCookie+";");
+
+        // POST https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb HTTP/1.1
+        header = {}
+        header['Host']='nice.checkplus.co.kr'
+        header['Connection']='keep-alive'
+        header['Cache-Control']='max-age=0'
+        header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+        header['sec-ch-ua-mobile']='?0'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Upgrade-Insecure-Requests']='1'
+        header['Origin']='https://nice.checkplus.co.kr'
+        header['Content-Type']='application/x-www-form-urlencoded'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+        header['Sec-Fetch-Site']='same-origin'
+        header['Sec-Fetch-Mode']='navigate'
+        header['Sec-Fetch-Dest']='document'
+        header['Referer']='https://nice.checkplus.co.kr/CheckPlusSafeModel/checkplus.cb'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+        header['Cookie']=cookie;
+
+        postData = 'm=serviceMain'
+
+        result = await axios({
+            method:'POST',
+            url:niceHost+'/CheckPlusSafeModel/service.cb',
+            headers:header,
+            validateStatus: function (status) {
+                return status == 302 || status == 200;
+              },
+            data:postData
+        });
+
+
+        console.log("[module] 문자 init checkplus.cb completed!")
+
+        cookie += cookieParser(result);
+
+        let menuId = sliceFunc(result.data, 'var menuId = "', '";');
+      
+        header = {};
+
+        // POST https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb HTTP/1.1
+        header['Host']='nice.checkplus.co.kr'
+        header['Connection']='keep-alive'
+        header['Cache-Control']='max-age=0'
+        header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+        header['sec-ch-ua-mobile']='?0'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Upgrade-Insecure-Requests']='1'
+        header['Origin']='https://nice.checkplus.co.kr'
+        header['Content-Type']='application/x-www-form-urlencoded'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+        header['Sec-Fetch-Site']='same-origin'
+        header['Sec-Fetch-Mode']='navigate'
+        header['Sec-Fetch-User']='?1'
+        header['Sec-Fetch-Dest']='document'
+        header['Referer']='https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb?m=authMobileMain'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+        header['Cookie']=cookie;
+
+        //mobileco: LGM , mvnoCo: LGM
+        postData = 'm=authMobile01'
+        postData += '&mobileco='+ mobileco
+        postData += '&mobileAuthType=SMS'
+        postData += '&nciInfo='
+        postData += '&menuId='+menuId
+        postData += '&agree=on'
+        postData += '&agree1=Y'
+        postData += '&agree2=Y'
+        postData += '&agree3=Y'
+        postData += '&agree4=Y'
+        postData += '&agree6=Y'
+        if(Number(telecom)>2){
+            postData += '&mvnoCo='+mvnoCo
+        }
+
+        result = await axios({
+            method:'POST',
+            url:niceHost+'/CheckPlusSafeModel/service.cb',
+            data:postData,
+            headers:header
+        });
+
+        console.log("[module] 문자 init checkplus.cb completed!")
+
+
+        const captchaImgVersion = sliceFunc(result.data, 'var captchaImgVersion="', '";');
+        menuId = sliceFunc(result.data, 'menuId = "', '";');
+
+        header = {}
+        // GET https://nice.checkplus.co.kr/Common/service.cb?m=simpleCaptchaInfo&ver=MOBILE1697119583774 HTTP/1.1
+        header['Host']='nice.checkplus.co.kr'
+        header['Connection']='keep-alive'
+        header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+        header['sec-ch-ua-mobile']='?0'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Accept']='image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+        header['Sec-Fetch-Site']='same-origin'
+        header['Sec-Fetch-Mode']='no-cors'
+        header['Sec-Fetch-Dest']='image'
+        header['Referer']='https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+        header['Cookie']=cookie;
+
+        result = await axios({
+            method:'GET',
+            url:niceHost+'/Common/service.cb?m=simpleCaptchaInfo&ver='+captchaImgVersion,
+            headers:header,
+            responseType: 'arraybuffer'
+        });
+
+        console.log("[module] 보안문자 불러오기 성공!")
+
+        const imageData = result.data;
+    
+        // 전달받은 보안문자를 base64로 인코딩
+        const buffer = Buffer.from(imageData, 'binary').toString('base64');
+    
+
+        const dbParam = {
+            uuid:uuid,
+            cookie:cookie,
+            menuId:menuId,
+            ptlCookie:ptlCookie,
+            queData:queData
+        }
+
+        const dbResult = await putItem(dbParam);
+
+        if(dbResult.statusCode!=200){
+            return {
+                statusCode:500,
+                body:"dberror"
+            }    
+        }
+
+
+        response = {
+            statusCode:200,
+            body:buffer
+        }
+
+
+    }catch(error){
+        console.log("[module] 문자Init error");
+        console.log(error);
+        response = {
+            statusCode:500,
+            body:error.message
+        }
+    }
+
+    return response;
+}
+Hira.prototype.문자요청 = async function(Input){
+    let response = {};
+    let postData = "";
+    let header = {};
+    const host = "https://nice.checkplus.co.kr";
+
+    try {
+        const uuid = Input.uuid
+        const username = Input.userName;
+        const mynum1 = Input.identity.substring(0, 6);
+        const mynum2 = Input.identity.substring(6, 7);
+        const mobileno = Input.phoneNo;
+        const answer = Input.captchaImg;
+
+        // 문자인증 확인하고 추가 통신에서 필요 -> DB에 저장만
+        const identity = Input.identity;
+        
+
+        if(uuid==undefined|| uuid==""){
+            return {
+                statusCode:500,
+                body:"putUuid"
+            }
+        }
+
+        let dbResult = await selectItem(uuid);
+        
+        if(JSON.stringify(dbResult)==="{}"){
+            return {
+                statusCode:400,
+                body:"LOGINFIRST"
+            }
+        }
+        const dbItem = dbResult.Item;
+
+        console.log(dbItem)
+        let cookie = dbItem.cookie;
+        let menuId = dbItem.menuId;
+        const ptlCookie = dbItem.ptlCookie;
+        const queData = dbItem.queData;
+
+        
+        // POST https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb HTTP/1.1
+        header['Host']='nice.checkplus.co.kr'
+        header['Connection']='keep-alive'
+        header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+        header['Accept']='*/*'
+        header['Content-Type']='application/x-www-form-urlencoded; charset=UTF-8'
+        header['X-Requested-With']='XMLHttpRequest'
+        header['sec-ch-ua-mobile']='?0'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Origin']='https://nice.checkplus.co.kr'
+        header['Sec-Fetch-Site']='same-origin'
+        header['Sec-Fetch-Mode']='cors'
+        header['Sec-Fetch-Dest']='empty'
+        header['Referer']='https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+        header['Cookie']=cookie;
+        
+        postData = 'm=authMobile01Proc'
+        postData += '&authType=SMS'
+        postData += '&menuId='+menuId
+        postData += '&username='+encodeURIComponent(username)
+        postData += '&mynum1='+mynum1
+        postData += '&mynum2='+mynum2
+        postData += '&mobileno='+mobileno
+        postData += '&answer='+answer
+
+        result = await axios({
+            method:'POST',
+            url:host+'/CheckPlusSafeModel/service.cb ',
+            data:postData,
+            headers:header
+        });
+
+        const RES_MENU_ID = result.data["RES_MENU_ID"];
+        const RES_CD = result.data["RES_CD"];
+        console.log(result.data)
+        // 인증요청 오류: 개인정보오류 , 토큰 만료 등등
+        if(RES_CD!="0000"){
+            // 0001: 인증번호 틀렸을때 
+            // 0002 : 아마 토큰 만료
+            response = {
+                statusCode:400,
+                body:result.data["RES_RESULT"]
+            }
+        }else{
+
+            // POST https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb HTTP/1.1
+            header['Host']='nice.checkplus.co.kr'
+            header['Connection']='keep-alive'
+            header['Cache-Control']='max-age=0'
+            header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+            header['sec-ch-ua-mobile']='?0'
+            header['sec-ch-ua-platform']='"Windows"'
+            header['Upgrade-Insecure-Requests']='1'
+            header['Origin']='https://nice.checkplus.co.kr'
+            header['Content-Type']='application/x-www-form-urlencoded'
+            header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+            header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+            header['Sec-Fetch-Site']='same-origin'
+            header['Sec-Fetch-Mode']='navigate'
+            header['Sec-Fetch-User']='?1'
+            header['Sec-Fetch-Dest']='document'
+            header['Referer']='https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb'
+            header['Accept-Encoding']='gzip, deflate, br'
+            header['Accept-Language']='ko-KR,ko;q=0.9'
+            header['Cookie']=cookie;
+
+            postData = 'm=authMobile02'
+
+            result = await axios({
+                method:'POST',
+                url:host+'/CheckPlusSafeModel/service.cb ',
+                data:postData,
+                headers:header
+            });
+        
+            menuId = sliceFunc(result.data, 'var menuId = "', '";');
+
+            // 요청 성공시 refresh된 menuId 찾기
+            const dbParam = {
+                uuid:uuid,
+                cookie:cookie,
+                menuId:menuId,
+                identity:identity,
+                ptlCookie:ptlCookie,
+                queData: queData
+            }
+    
+            dbResult = await putItem(dbParam);
+    
+            if(dbResult.statusCode!=200){
+                return {
+                    statusCode:500,
+                    body:"dberror"
+                }    
+            }
+    
+            response = {
+                statusCode:200,
+                body:"success_sms_request"
+            }
+
+        }
+
+    } catch (error) {
+        console.log("[module] 문자요청 error");
+        console.log(error);
+        response = {
+            statusCode:500,
+            body:error.message
+        }
+
+    }
+
+    return response;
+
+}
+
+
+Hira.prototype.문자확인 = async function(Input){
+    let response = {};
+    let postData = "";
+    const host = "https://nice.checkplus.co.kr";
+    let header = {};
+
+    try {
+
+        const authNum = Input.authNum;
+        const uuid = Input.uuid;
+       
+
+        if(uuid==undefined|| uuid==""){
+            return {
+                statusCode:500,
+                body:"putUuid"
+            }
+        }
+
+        const dbResult = await selectItem(uuid);
+        
+        if(JSON.stringify(dbResult)==="{}"){
+            return {
+                statusCode:400,
+                body:"LOGINFIRST"
+            }
+        }
+        const dbItem = dbResult.Item
+
+        let menuId = dbItem.menuId;
+        let cookie = dbItem.cookie;
+        const identity = dbItem.identity;
+        const ptlCookie = dbItem.ptlCookie;
+
+        const queData = dbItem.queData;
+
+        // 인증번호가 틀렸을때 이것만 바꿔서 다시 요청
+        const resMenuId = dbItem.RES_MENU_ID;
+
+        // 인증번호 확인하는 단계에서 실패해서 재시도하는 경우 menuId가 있고 
+        // menuId가 없는 경우는 인증확인을 처음하는 단계
+        if(resMenuId){
+            menuId = resMenuId
+        }
+
+        // POST https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb HTTP/1.1
+        header['Host']='nice.checkplus.co.kr'
+        header['Connection']='keep-alive'
+        header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+        header['Accept']='*/*'
+        header['Content-Type']='application/x-www-form-urlencoded; charset=UTF-8'
+        header['X-Requested-With']='XMLHttpRequest'
+        header['sec-ch-ua-mobile']='?0'
+        header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        header['sec-ch-ua-platform']='"Windows"'
+        header['Origin']='https://nice.checkplus.co.kr'
+        header['Sec-Fetch-Site']='same-origin'
+        header['Sec-Fetch-Mode']='cors'
+        header['Sec-Fetch-Dest']='empty'
+        header['Referer']='https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb'
+        header['Accept-Encoding']='gzip, deflate, br'
+        header['Accept-Language']='ko-KR,ko;q=0.9'
+        header['Cookie']=cookie;
+
+        postData = 'm=authMobile02Proc&menuId='+menuId+'&authnumber='+authNum
+
+        result = await axios({
+            method:'POST',
+            url:host+'/CheckPlusSafeModel/service.cb',
+            data:postData,
+            headers:header
+        });
+
+        menuId = result.data["RES_MENU_ID"];
+        //{"RES_MENU_ID":"b00acd77c4fa645715bbdfa4b16216e7ae811687e4047c724503ba30c4a2f9b7","RES_CD":"0000"}
+
+        let dbParam = {
+            uuid:uuid,
+            cookie:cookie,
+            queData:queData,
+            ptlCookie:ptlCookie,
+            identity:identity
+        }
+
+        
+        if(result.data["RES_CD"]!="0000"){
+            // 인증번호가 틀린경우 or 다른 에러케이스
+            
+            dbParam["RES_MENU_ID"] = menuId
+            
+            const RES_RESULT = result.data["RES_RESULT"];
+            response = {
+                statusCode:400,
+                body:RES_RESULT
+            }
+        }else{
+            // 인증 성공시 필요 통신 보내기
+            header= {}
+            // POST https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb HTTP/1.1
+            header['Host']='nice.checkplus.co.kr'
+            header['Connection']='keep-alive'
+            header['Cache-Control']='max-age=0'
+            header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+            header['sec-ch-ua-mobile']='?0'
+            header['sec-ch-ua-platform']='"Windows"'
+            header['Upgrade-Insecure-Requests']='1'
+            header['Origin']='https://nice.checkplus.co.kr'
+            header['Content-Type']='application/x-www-form-urlencoded'
+            header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+            header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+            header['Sec-Fetch-Site']='same-origin'
+            header['Sec-Fetch-Mode']='navigate'
+            header['Sec-Fetch-User']='?1'
+            header['Sec-Fetch-Dest']='document'
+            header['Referer']='https://nice.checkplus.co.kr/CheckPlusSafeModel/service.cb'
+            header['Accept-Encoding']='gzip, deflate, br'
+            header['Accept-Language']='ko-KR,ko;q=0.9'
+            header['Cookie']=cookie;
+            
+            postData = 'm=serviceResultSend'
+
+            result = await axios({
+                method:'POST',
+                url:host+'/CheckPlusSafeModel/service.cb',
+                data:postData,
+                headers:header
+            });
+            
+            const nextUrl = sliceFunc(result.data, 'location.href = "', '";');
+            cookie = ptlCookie;
+            console.log("ptlCookie: "+ ptlCookie)
+            console.log("nextUrl: "+ nextUrl)
+
+            var hostArray = new Array('COMMON_CHECKPLUS','COMMON_MOBILE','COMMON_MOBILE_LGU'); // 유량제어 항목이 여러개라 배열로 동시에 처리
+		    const ipStr = queData["ipStr"]
+            const loginId = queData["loginId"]
+            const port = queData["port"]
+            
+            for (var i = 0 ; i < hostArray.length;i++) { 
+		    	var hostElement  = hostArray[i];
+
+                header = {};
+                // POST https://ifc.niceid.co.kr/TRACERAPI/outQueue.do HTTP/1.1
+                header['Host']='ifc.niceid.co.kr'
+                header['Connection']='keep-alive'
+                header['sec-ch-ua']='"Chromium";v="118", "Google Chrome";v="118", "Not=A?Brand";v="99"'
+                header['Accept']='*/*'
+                header['Content-Type']='application/x-www-form-urlencoded; charset=UTF-8'
+                header['sec-ch-ua-mobile']='?0'
+                header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
+                header['sec-ch-ua-platform']='"Windows"'
+                header['Origin']='https://nice.checkplus.co.kr'
+                header['Sec-Fetch-Site']='cross-site'
+                header['Sec-Fetch-Mode']='cors'
+                header['Sec-Fetch-Dest']='empty'
+                header['Referer']='https://nice.checkplus.co.kr/'
+                header['Accept-Encoding']='gzip, deflate, br'
+                header['Accept-Language']='ko-KR,ko;q=0.9'
+
+                postData = 'host='+hostElement+'&ip='+ipStr+'&loginId='+loginId+'&port='+port+'&pageUrl=result'
+                result = await axios({
+                    method:'POST',
+                    url:'https://ifc.niceid.co.kr/TRACERAPI/outQueue.do',
+                    headers:header,
+                    data:postData
+                });
+            }
+
+
+            header = {};
+            // GET https://ptl.hira.or.kr/co/checkplus/success.do?EncodeData=AgAFRzU5NTUsTO8hMkr8LtYINWjyFfqs3Z8SaCfRy3ipCYbCak3QkTruoc38NKOhBxkvXUaR1JgmONIZFgt3FISsVN0uBkpvQnJl2o/R9j2n/uY7Bj/JPiOeTTjbTN1OGKbFTprtkiJunFl0HnA0RmhX9TrNMx0e8pg5zijLYesoeqG4R7GIzSVmJoUR0%2B6HKCTYT4dg5HSDmQ3Bc0RmG2YRwDpjWNRIAzl2UkDP2Erg5fLeRrfTrT5MQU0OlHSpMErMzh9/22IUVgD/sfOMIgKdHbPeJOaw3V%2BZ5iLikfBY%2BwiYuHlXl/3kZR9EPwtH6j9dCnT2sem3qFox3pyLeuvmOwTrbxyOrqpzcVVGX7F/V%2B1bmVZ9r8lUoyrGzzAYQ/D2W289v5AcvdzimOiz1Ce2pas5K8m4cq8E2bZPGhZTNpm5pKoCpL0Dx2Tq4hclKk5nb3f%2B%2BmsRqlDyX46YUwvQ6YrKLdh2pswzFztUK3n2HG3H69E0Wb1wXvY0PhdPqGscdvFASdCengDwiOHiwx/z/5gv%2B2mM4oWdN%2BJyvwp5witJUjRampUhnlBmM4TMnf2GzxBfM5myMrk4xglBKgFDUkGAou1GnfMU6r6eF/tQbqlc/x0PwcauVHuC2W/9kwpHLUjj24/ccg%2Bxns7bkaGMN6YjC1v9%2BQVDpWM8559Z9GzK3pQgVCQbOLeVnL7wCvCG1i/zWu4= HTTP/1.1
+            header['Host']='ptl.hira.or.kr'
+            header['Connection']='keep-alive'
+            header['sec-ch-ua']='"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"'
+            header['sec-ch-ua-mobile']='?0'
+            header['sec-ch-ua-platform']='"Windows"'
+            header['Upgrade-Insecure-Requests']='1'
+            header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+            header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+            header['Sec-Fetch-Site']='cross-site'
+            header['Sec-Fetch-Mode']='navigate'
+            header['Sec-Fetch-Dest']='document'
+            header['Referer']='https://nice.checkplus.co.kr/'
+            header['Accept-Encoding']='gzip, deflate, br'
+            header['Accept-Language']='ko-KR,ko;q=0.9'
+            header['Cookie']=cookie;
+
+            result = await axios({
+                method:'GET',
+                url:nextUrl,
+                headers:header
+            });
+
+            header = {};
+            // POST https://ptl.hira.or.kr/pl/login/certByJumin.do HTTP/1.1
+            header['Host']='ptl.hira.or.kr'
+            header['Connection']='keep-alive'
+            header['sec-ch-ua']='"Chromium";v="118", "Google Chrome";v="118", "Not=A?Brand";v="99"'
+            header['Content-Type']='application/x-www-form-urlencoded; charset=UTF-8'
+            header['X-Requested-With']='XMLHttpRequest'
+            header['sec-ch-ua-mobile']='?0'
+            header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
+            header['sec-ch-ua-platform']='"Windows"'
+            header['Accept']='*/*'
+            header['Origin']='https://ptl.hira.or.kr'
+            header['Sec-Fetch-Site']='same-origin'
+            header['Sec-Fetch-Mode']='cors'
+            header['Sec-Fetch-Dest']='empty'
+            header['Referer']='https://ptl.hira.or.kr/main.do?pageType=certByJ&domain=https://www.hira.or.kr&uri=JTJGcmIlMkZjbW1uJTJGcmJDZXJ0UmV0dXJuLmRvJTNGc3RyUGFnZVR5cGUlM0RESUFH'
+            header['Accept-Encoding']='gzip, deflate, br'
+            header['Accept-Language']='ko-KR,ko;q=0.9'
+            header['Cookie']=cookie;
+
+            postData = '%40d1%23usr_nm='
+            postData += '&%40d1%23jumin_no='+identity
+            postData += '&%40d1%23jumin_no1='+identity.substring(0, 6)
+            postData += '&%40d1%23jumin_no2='+identity.substring(6)
+            postData += '&%40d1%23domain=https%3A%2F%2Fwww.hira.or.kr'
+            postData += '&%40d1%23uri=JTJGcmIlMkZjbW1uJTJGcmJDZXJ0UmV0dXJuLmRvJTNGc3RyUGFnZVR5cGUlM0RESUFH'
+            postData += '&%40d1%23resParam='
+            postData += '&%40d1%23resToken='
+            postData += '&%40d1%23resultCode='
+            postData += '&%40d%23=%40d1%23'
+            postData += '&%40d1%23=dmParam'
+            postData += '&%40d1%23tp=dm'
+            postData += '&'
+
+            result = await axios({
+                method:'POST',
+                url:"https://ptl.hira.or.kr/pl/login/certByJumin.do",
+                headers:header,
+                data:postData
+            });
+            
+
+            resultData = result.data;
+
+            console.log(resultData);
+            if(resultData["dmResult"]==undefined||resultData["dmResult"]["tknSno"]==undefined||resultData["dmResult"]["returnUrl"]==undefined){
+                console.log(resultData);
+                return {
+                    statusCode:500,
+                    body:"Fail_Issue_Session"
+                }
+            }
+
+            const tknSno = resultData["dmResult"]["tknSno"];
+            const returnUrl = resultData["dmResult"]["returnUrl"];
+
+
+            // GET https://www.hira.or.kr/rb/cmmn/rbCertReturn.do?strPageType=DIAG&tknId=bef00e43-2277-40e7-9481-b45572bf0210 HTTP/1.1
+            header['Host']='www.hira.or.kr'
+            header['Connection']='keep-alive'
+            header['sec-ch-ua']='"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"'
+            header['sec-ch-ua-mobile']='?0'
+            header['sec-ch-ua-platform']='"Windows"'
+            header['Upgrade-Insecure-Requests']='1'
+            header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'
+            header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+            header['Sec-Fetch-Site']='same-site'
+            header['Sec-Fetch-Mode']='navigate'
+            header['Sec-Fetch-User']='?1'
+            header['Sec-Fetch-Dest']='document'
+            header['Referer']='https://ptl.hira.or.kr/'
+            header['Accept-Encoding']='gzip, deflate, br'
+            header['Accept-Language']='ko-KR,ko;q=0.9'
+            // header['Cookie']=cookie;
+            //  WT_FPC=id=24b2367346f88547a111694251389042:lv=1694251403760:ss=1694251389042
+
+            result = await axios({
+                method:'GET',
+                url:returnUrl+'&tknId='+tknSno,
+                headers:header,
+                maxRedirects: 0,
+                validateStatus: function (status) {
+                    return status == 302 || status == 200;
+                  }
+            });
+
+
+            const path = result.headers.location;
+            cookie = cookieParser(result);
+            if(result.status!=302 || cookie.indexOf("SESSION=")==-1 || path==undefined){
+                console.log("cookie: "+cookie)
+                return {
+                    statusCode:500,
+                    body:"Fail_Issue_Session"
+                }
+            }
+
+
+            const originHost = "https://www.hira.or.kr";
+            // GET https://www.hira.or.kr/rb/diag/selectMyDiagInfmList.do?pgmid=HIRAA070001000600 HTTP/1.1
+            header['Host']='www.hira.or.kr'
+            header['Connection']='keep-alive'
+            header['Upgrade-Insecure-Requests']='1'
+            header['User-Agent']='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'
+            header['Accept']='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7'
+            header['Sec-Fetch-Site']='same-site'
+            header['Sec-Fetch-Mode']='navigate'
+            header['Sec-Fetch-User']='?1'
+            header['Sec-Fetch-Dest']='document'
+            header['sec-ch-ua']='"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"'
+            header['sec-ch-ua-mobile']='?0'
+            header['sec-ch-ua-platform']='"Windows"'
+            header['Referer']='https://ptl.hira.or.kr/'
+            header['Accept-Encoding']='gzip, deflate, br'
+            header['Accept-Language']='ko-KR,ko;q=0.9'
+            header['Cookie']=cookie;
+
+            result = await axios({
+                method:'GET',
+                url:originHost+path,
+                headers:header
+            });
+
+            const patHpin = sliceFunc(result.data, 'var patHpin = "', '";');
+            const patNm = sliceFunc(result.data, 'var patNm = "', '";');
+
+
+
+            dbParam = {
+                uuid:uuid,
+                cookie:cookie,
+                patHpin:patHpin,
+                patNm:patNm
+
+            }
+
+            console.log(dbParam)
+            response = {
+                statusCode:200,
+                body:"success_auth"
+            }
+            
+        }
+
+        const dbPutResult = await putItem(dbParam);
+
+        if(dbPutResult.statusCode!=200){
+            return {
+                statusCode:500,
+                body:"dberror"
+            }    
+        }
+
+    } catch (error) {
+        console.log("[module] 문자확인 error");
+        console.log(error);
+
+        response = {
+            statusCode:500,
+            body:error.message
+        }
+    }
+
+    return response;
+
+}
 
 Hira.prototype.간편로그인 = async function(Input){
     const host = "https://ptl.hira.or.kr";
@@ -311,6 +1215,7 @@ Hira.prototype.간편로그인 = async function(Input){
 
 
         let telcoTycd = "null";
+
         if(telecom){
             if(telecom=="0"){
                 telcoTycd = '"S"'
@@ -342,7 +1247,7 @@ Hira.prototype.간편로그인 = async function(Input){
         header['Sec-Fetch-Dest']='document'
         header['Accept-Encoding']='gzip, deflate, br'
         header['Accept-Language']='ko-KR,ko;q=0.9'
-
+        
          result = await axios({
             method:'GET',
             url:host+'/main.do?pageType=certByJ&domain=https://www.hira.or.kr&uri=JTJGcmIlMkZjbW1uJTJGcmJDZXJ0UmV0dXJuLmRvJTNGc3RyUGFnZVR5cGUlM0RESUFH',
@@ -399,6 +1304,8 @@ Hira.prototype.간편로그인 = async function(Input){
                 body:"fail_issue_token"
             }
         }
+        
+        //실제 로그인으로 요청하는 부분
         // POST https://ptl.hira.or.kr/oacx/api/v1.0/authen/request HTTP/1.1
         header['Host']='ptl.hira.or.kr'
         header['Connection']='keep-alive'
@@ -472,7 +1379,8 @@ Hira.prototype.간편로그인 = async function(Input){
         if(clientMessage!="성공"||oacxCode!="OACX_SUCCESS"||resultCode!="200"){
             console.log(resultData);
 
-            // 개인정보오류 + 해당 인증서에 가입되어 있지 않을때도 
+            // 개인정보오류 + 해당 인증서에 가입되어 있지 않을때도
+            // jjw 확인해봐야할 부분 인증서 가입되지 않았을때 
             if(resultData["oacxCode"]=="OACX_NO_USER"){
                 
                 return {
@@ -937,6 +1845,7 @@ Hira.prototype.내진료정보열람 = async function(Input){
         path += '&srchDiagInfo='
         path += '&srchAllYn=Y'
         path += '&srchSickYn=N'
+
         if(type=="1"){
             path += '&snstSickShwYn=Y'
         }else{

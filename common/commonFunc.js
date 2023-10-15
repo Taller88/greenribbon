@@ -55,14 +55,14 @@ exports.cookieRefresh=(oldCookies, newCookies)=>{
     const result = {};  
 
     for(var i=0; i<oldCookiesArr.length-1; i++){
-        const cookieName = oldCookiesArr[i].substring(0, oldCookiesArr[i].indexOf("="));
+        const cookieName = oldCookiesArr[i].substring(0, oldCookiesArr[i].indexOf("=")).trim();
         const cookieVal = oldCookiesArr[i].substring(oldCookiesArr[i].indexOf("=")+1);
         result[cookieName] = cookieVal+";"
     }
 
 
     for(var i=0; i<newCookieArr.length-1; i++){
-        const cookieName = newCookieArr[i].substring(0, newCookieArr[i].indexOf("="));
+        const cookieName = newCookieArr[i].substring(0, newCookieArr[i].indexOf("=")).trim();
         const cookieVal = newCookieArr[i].substring(newCookieArr[i].indexOf("=")+1);
         result[cookieName] = cookieVal+";"
     }
