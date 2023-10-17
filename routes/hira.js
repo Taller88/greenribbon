@@ -316,7 +316,7 @@ router.get("/easyLogin", async(req, res, next)=>{
         
         const organization="002";
         const loginType="5"
-        const loginTypeLevel="6"        
+        const loginTypeLevel="1"        
         const phoneNo="01082271995"
         const userName="정진우"
         const identity="9306161268217"
@@ -560,7 +560,7 @@ router.get("/readDiagnosisInfo", async(req, res, next)=>{
          uuid:uuid,
          "startDate":"20210309",
          "endDate":"20230909",
-         "type":"0"
+         "type":"1"
             } 
         console.log("[router] readDiagnosisInfo init");
         

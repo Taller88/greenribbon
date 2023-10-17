@@ -1795,6 +1795,7 @@ Hira.prototype.내진료정보열람 = async function(Input){
         postData += '&srchInsuType=etc'
         postData += '&srchDiagInfo='
         postData += '&srchAllYn=Y'
+        postData += '&srchSickYn=Y'
         postData += '&srchFrDd='+srchFrDate.replaceAll("-","")
         postData += '&srchToDd='+srchToDate.replaceAll("-","")
         postData += '&patHpin='+patHpin
@@ -1804,10 +1805,10 @@ Hira.prototype.내진료정보열람 = async function(Input){
         if(type=="1"){
             postData += '&snstSickShwYn=Y'
             postData += '&snstSickShw=on'
-            postData += '&srchSickYn=Y'
+           
 
         }else {
-            postData += '&srchSickYn=N'
+
             postData += '&snstSickShwYn=N'
         }
         postData += '&insuType=etc'
@@ -1853,14 +1854,13 @@ Hira.prototype.내진료정보열람 = async function(Input){
         path += '&srchInsuType=etc'
         path += '&srchDiagInfo='
         path += '&srchAllYn=Y'
+        path += '&srchSickYn=Y'
 
         if(type=="1"){
             path += '&snstSickShwYn=Y'
             path += '&snstSickShw=on'
-            path += '&srchSickYn=Y'
-
+            
         }else{
-            path += '&srchSickYn=N'
             path += '&snstSickShwYn=N'
         }       
         path += '&srchFrDd='+srchFrDate.replaceAll("-","")
@@ -1973,7 +1973,7 @@ Hira.prototype.내진료정보열람 = async function(Input){
          path += '&srchInsuType=etc'
          path += '&srchDiagInfo='
          path += '&srchAllYn=Y'
-         path += '&srchSickYn=N'
+         path += '&srchSickYn=Y'
          if(type=="1"){
             path += '&snstSickShwYn=Y'
          }else{
@@ -2092,7 +2092,7 @@ Hira.prototype.내진료정보열람 = async function(Input){
         path += '&srchInsuType=etc'
         path += '&srchDiagInfo='
         path += '&srchAllYn=Y'
-        path += '&srchSickYn=N'
+        path += '&srchSickYn=Y'
         if(type=="1"){
             path += '&snstSickShwYn=Y'
          }else{
