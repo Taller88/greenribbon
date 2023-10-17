@@ -617,7 +617,7 @@ Hira.prototype.문자요청 = async function(Input){
             !dbResult.Item.menuId||
             !dbResult.Item.ptlCookie||
             !dbResult.Item.queData){
-                
+
             return {
                 statusCode:400,
                 body:"LOGINFIRST"
@@ -671,11 +671,18 @@ Hira.prototype.문자요청 = async function(Input){
         console.log(result.data)
         // 인증요청 오류: 개인정보오류 , 토큰 만료 등등
         if(RES_CD!="0000"){
-            // 0001: 인증번호 틀렸을때 
-            // 0002 : 아마 토큰 만료
-            response = {
-                statusCode:400,
-                body:result.data["RES_RESULT"]
+            // 0002 : 재시도
+            if(RES_CD=="0002"){
+                response = {
+                    statusCode:400,
+                    body:"token_expired"
+                }
+    
+            }else{
+                response = {
+                    statusCode:500,
+                    body:result.data["RES_RESULT"]
+                }
             }
         }else{
 
@@ -1788,7 +1795,6 @@ Hira.prototype.내진료정보열람 = async function(Input){
         postData += '&srchInsuType=etc'
         postData += '&srchDiagInfo='
         postData += '&srchAllYn=Y'
-        postData += '&srchSickYn=N'
         postData += '&srchFrDd='+srchFrDate.replaceAll("-","")
         postData += '&srchToDd='+srchToDate.replaceAll("-","")
         postData += '&patHpin='+patHpin
@@ -1796,9 +1802,12 @@ Hira.prototype.내진료정보열람 = async function(Input){
         postData += '&ykiho='
         postData += '&yadmNm=decodeURIComponentEx%28%22%22%29%2F'
         if(type=="1"){
-            postData += '&snstSickShwYn=N'
+            postData += '&snstSickShwYn=Y'
             postData += '&snstSickShw=on'
+            postData += '&srchSickYn=Y'
+
         }else {
+            postData += '&srchSickYn=N'
             postData += '&snstSickShwYn=N'
         }
         postData += '&insuType=etc'
@@ -1807,6 +1816,8 @@ Hira.prototype.내진료정보열람 = async function(Input){
         postData += '&srchYkihoAll=on'
         postData += '&srchFrDate='+srchFrDate
         postData += '&srchToDate='+srchToDate
+
+        console.log("postData1: "+postData);
 
         result = await axios({
             method:'POST',
@@ -1842,11 +1853,14 @@ Hira.prototype.내진료정보열람 = async function(Input){
         path += '&srchInsuType=etc'
         path += '&srchDiagInfo='
         path += '&srchAllYn=Y'
-        path += '&srchSickYn=N'
 
         if(type=="1"){
             path += '&snstSickShwYn=Y'
+            path += '&snstSickShw=on'
+            path += '&srchSickYn=Y'
+
         }else{
+            path += '&srchSickYn=N'
             path += '&snstSickShwYn=N'
         }       
         path += '&srchFrDd='+srchFrDate.replaceAll("-","")
@@ -1856,6 +1870,8 @@ Hira.prototype.내진료정보열람 = async function(Input){
         path += '&patHpin='+patHpin
         path += '&patNm='+encodeURIComponent(patNm)
         path += '&srchYadmNm=&srchYkiho='
+        
+        console.log("postData2: "+postData);
 
 
         console.log(path);

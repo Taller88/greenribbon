@@ -97,10 +97,10 @@ router.get("/smsRequest", async(req, res, next)=>{
 
         
         const loginTypeLevel="6"        
-        const phoneNo="01091978686"
-        const userName="정진아"
-        const identity="9306201268217"
-        const captchaImg = "472318"
+        const phoneNo="01082271995"
+        const userName="정진우"
+        const identity="9306161268217"
+        const captchaImg = "927136"
        
 
         const telecom = "5"// pass 테스트 -> LG 알뜰폰
@@ -214,7 +214,7 @@ router.get("/smsCheck", async(req, res, next)=>{
 
 
         
-        const authNum="529967";
+        const authNum="234457";
        
         const uuid = "qwer"
         const input = {
@@ -555,7 +555,7 @@ router.post("/authCheck", async(req, res, next)=>{
 router.get("/readDiagnosisInfo", async(req, res, next)=>{
     let response = "";    
     try {
-        const uuid = "qwer"
+        const uuid = "asdfgh"
         const input = {
          uuid:uuid,
          "startDate":"20210309",
